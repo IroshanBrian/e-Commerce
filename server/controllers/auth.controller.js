@@ -61,9 +61,25 @@ export const signup = async (req, res) => {
 }
 
 export const login = async (req, res) => {
+
      res.send('login')
 }
 
 export const logout = async (req, res) => {
-     res.send('logout')
+     try {
+          const refreshToken = req.cookies.refreshToken;
+          if (refreshToken) {
+               const decode = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+               await redis.del(`refresh_token:${decode.userId}`);
+          }
+          res.clearCookie('accessToken');
+          res.clearCookie('refreshToken');
+          res.status(200).json({
+               message: 'User logged out successfully'
+          });
+     } catch (error) {
+          res.status(500).json({
+               message: error.message
+          })
+     }
 }
