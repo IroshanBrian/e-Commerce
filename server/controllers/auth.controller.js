@@ -61,8 +61,29 @@ export const signup = async (req, res) => {
 }
 
 export const login = async (req, res) => {
+     try {
+          const { email, password } = req.body;
+          const user = await User.findOne({ email });
+          if (user && await user.comparePassword(password)) {
+               const { accessToken, refreshToken } = generateTokens(user._id);
+               await storeRefreshToken(user._id, refreshToken);
 
-     res.send('login')
+               setCookies(res, accessToken, refreshToken);
+
+               res.status(200).json({
+                    message: 'User logged in successfully'
+               });
+          }
+          else {
+               res.status(401).json({
+                    message: 'Invalid credentials'
+               });
+          }
+     } catch (error) {
+          res.status(500).json({
+               message: error.message
+          })
+     }
 }
 
 export const logout = async (req, res) => {
